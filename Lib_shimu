@@ -1,0 +1,145 @@
+local SHIMU_UI = {}
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+
+-- Buat ScreenGui utama
+local UI = Instance.new("ScreenGui")
+UI.Name = "SHIMU_UI"
+UI.Parent = game.CoreGui
+UI.ResetOnSpawn = false
+
+-- Buat Frame Utama (Container)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 400, 0, 300)
+MainFrame.Position = UDim2.new(0.5, -200, 0.5, -150)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true  -- Bisa dipindahkan
+MainFrame.Parent = UI
+
+-- Animasi Smooth Muncul
+MainFrame.BackgroundTransparency = 1
+TweenService:Create(MainFrame, TweenInfo.new(0.5), {BackgroundTransparency = 0}):Play()
+
+-- Header untuk UI
+local Header = Instance.new("TextLabel")
+Header.Size = UDim2.new(1, 0, 0, 30)
+Header.Text = "SHIMU UI v3"
+Header.Font = Enum.Font.GothamBold
+Header.TextSize = 20
+Header.TextColor3 = Color3.fromRGB(255, 255, 255)
+Header.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+Header.Parent = MainFrame
+
+-- Tombol Close & Minimize
+local CloseButton = Instance.new("TextButton")
+CloseButton.Size = UDim2.new(0, 30, 0, 30)
+CloseButton.Position = UDim2.new(1, -35, 0, 0)
+CloseButton.Text = "X"
+CloseButton.Font = Enum.Font.GothamBold
+CloseButton.TextSize = 16
+CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+CloseButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+CloseButton.Parent = Header
+
+local MinimizeButton = Instance.new("TextButton")
+MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
+MinimizeButton.Position = UDim2.new(1, -70, 0, 0)
+MinimizeButton.Text = "_"
+MinimizeButton.Font = Enum.Font.GothamBold
+MinimizeButton.TextSize = 16
+MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+MinimizeButton.BackgroundColor3 = Color3.fromRGB(50, 150, 200)
+MinimizeButton.Parent = Header
+
+-- Fungsi Minimize & Close dengan Animasi
+MinimizeButton.MouseButton1Click:Connect(function()
+    TweenService:Create(MainFrame, TweenInfo.new(0.5), {Size = UDim2.new(0, 400, 0, 0)}):Play()
+    wait(0.5)
+    MainFrame.Visible = false
+end)
+
+CloseButton.MouseButton1Click:Connect(function()
+    UI:Destroy()
+end)
+
+-- **Panel Statistik**
+local StatsPanel = Instance.new("Frame")
+StatsPanel.Size = UDim2.new(1, -10, 0, 100)
+StatsPanel.Position = UDim2.new(0, 5, 0, 40)
+StatsPanel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+StatsPanel.Parent = MainFrame
+
+local StatsLabel = Instance.new("TextLabel")
+StatsLabel.Size = UDim2.new(1, 0, 1, 0)
+StatsLabel.Text = "📊 Player Stats:\nLevel: " .. LocalPlayer.Data.Level.Value .. 
+                 "\n💰 Belly: " .. LocalPlayer.Data.Beli.Value ..
+                 "\n💎 Fragment: " .. LocalPlayer.Data.Fragment.Value
+StatsLabel.Font = Enum.Font.Gotham
+StatsLabel.TextSize = 14
+StatsLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+StatsLabel.BackgroundTransparency = 1
+StatsLabel.Parent = StatsPanel
+
+-- **Dropdown Menu**
+function SHIMU_UI:CreateDropdown(options, callback)
+    local Dropdown = Instance.new("TextButton")
+    Dropdown.Size = UDim2.new(1, -10, 0, 30)
+    Dropdown.Text = "Select Option"
+    Dropdown.Font = Enum.Font.Gotham
+    Dropdown.TextSize = 14
+    Dropdown.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Dropdown.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    Dropdown.Parent = MainFrame
+
+    local OptionList = Instance.new("Frame")
+    OptionList.Size = UDim2.new(1, 0, 0, 0)
+    OptionList.Position = UDim2.new(0, 0, 1, 5)
+    OptionList.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+    OptionList.Visible = false
+    OptionList.Parent = Dropdown
+
+    for _, option in pairs(options) do
+        local Option = Instance.new("TextButton")
+        Option.Size = UDim2.new(1, 0, 0, 30)
+        Option.Text = option
+        Option.Parent = OptionList
+        Option.MouseButton1Click:Connect(function()
+            Dropdown.Text = option
+            OptionList.Visible = false
+            callback(option)
+        end)
+    end
+
+    Dropdown.MouseButton1Click:Connect(function()
+        OptionList.Visible = not OptionList.Visible
+    end)
+
+    return Dropdown
+end
+
+-- Tambahkan Dropdown Menu
+SHIMU_UI:CreateDropdown({"Sea 1", "Sea 2", "Sea 3"}, function(selectedSea)
+    print("Selected:", selectedSea)
+end)
+
+-- **Auto-Save Settings**
+function SHIMU_UI:SaveSetting(name, value)
+    if not isfile("SHIMU_UI_Settings.json") then
+        writefile("SHIMU_UI_Settings.json", "{}")
+    end
+    local settings = game:GetService("HttpService"):JSONDecode(readfile("SHIMU_UI_Settings.json"))
+    settings[name] = value
+    writefile("SHIMU_UI_Settings.json", game:GetService("HttpService"):JSONEncode(settings))
+end
+
+function SHIMU_UI:LoadSetting(name, default)
+    if not isfile("SHIMU_UI_Settings.json") then return default end
+    local settings = game:GetService("HttpService"):JSONDecode(readfile("SHIMU_UI_Settings.json"))
+    return settings[name] or default
+end
+
+return SHIMU_UI
